@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Treasure Box</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bgDark: '#050510',
+            accent1: '#ff4d79',
+            accent2: '#ff1a40',
+            accent3: '#8a2be2',
+          },
+          fontFamily: {
+            playfair: ['"Playfair Display"', 'serif'],
+            poppins: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  
+  <!-- Three.js for 3D Cake -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      background-color: #050510;
+      color: white;
+      overflow: hidden; /* Hide scroll unless in final section */
+      margin: 0;
+      padding: 0;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Ambient Gradients */
+    .ambient-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: -2;
+      background: radial-gradient(circle at 20% 30%, rgba(255, 77, 121, 0.15), transparent 40%),
+                  radial-gradient(circle at 80% 70%, rgba(138, 43, 226, 0.15), transparent 40%);
+      pointer-events: none;
+    }
+
+    /* Floating Hearts */
+    .floating-hearts-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .heart-float {
+      position: absolute;
+      color: rgba(255, 77, 121, 0.4);
+      font-size: 24px;
+      bottom: -30px;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+      20% { opacity: 0.8; }
+      80% { opacity: 0.5; }
+      100% { transform: translateY(-110vh) rotate(360deg) scale(1.2); opacity: 0; }
+    }
+
+    /* Section Management */
+    .section {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .section.active {
+      display: flex;
+    }
+
+    /* specific for final section scrolling */
+    #final-container {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    #final-container.active {
+      display: block;
+    }
+
+    /* Glowing button */
+    .glow-btn {
+      background: linear-gradient(45deg, #ff1a40, #ff4d79);
+      box-shadow: 0 0 15px rgba(255, 77, 121, 0.6);
+      transition: all 0.3s ease;
+    }
+    .glow-btn:hover {
+      box-shadow: 0 0 25px rgba(255, 77, 121, 0.9);
+      transform: scale(1.05);
+    }
+    
+    .pulse-infinite {
+      animation: pulseAnim 2s infinite;
+    }
+    @keyframes pulseAnim {
+      0% { box-shadow: 0 0 10px rgba(255, 77, 121, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(255, 77, 121, 0.8); }
+      100% { box-shadow: 0 0 10px rgba(255, 77, 121, 0.4); }
+    }
+
+    /* Input Shake */
+    .shake {
+      animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both;
+      border-color: #ff1a40 !important;
+    }
+    @keyframes shakeAnim {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    .flash-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle, #fff 0%, transparent 80%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Memory Gallery Grid */
+    .gallery-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    .gallery-card:hover {
+      transform: scale(1.05) perspective(1000px) rotateX(2deg) rotateY(2deg);
+      z-index: 10;
+    }
+
+    /* Hidden audio */
+    audio { display: none; }
+    /* Menu/Flame Additions */
+    .flame {
+      animation: flicker 0.5s infinite alternate;
+    }
+    @keyframes flicker {
+      0% { transform: scale(1) rotate(-1deg); opacity: 1; }
+      100% { transform: scale(1.1) rotate(1deg); opacity: 0.8; }
+    }
+    .flame.extinguished {
+      animation: none;
+      display: none;
+    }
+  </style>
+</head>
+<body class="font-poppins h-screen w-screen text-white antialiased">
+  
+  <div class="ambient-bg"></div>
+  <div class="floating-hearts-container" id="hearts-container"></div>
+  <div class="flash-overlay" id="flash-overlay"></div>
+
+  <!-- Music toggle -->
+  <button id="music-btn" class="fixed top-6 right-6 z-50 glass-card p-3 rounded-full hover:bg-white/10 transition-colors">
+    <svg id="music-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <line x1="23" y1="9" x2="17" y2="15"></line>
+      <line x1="17" y1="9" x2="23" y2="15"></line>
+    </svg>
+  </button>
+  <audio id="bgm" loop>
+    <!-- Placeholder for audio source -->
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- ================= SECTION 1: Welcome Screen ================= -->
+  <section id="sec-1" class="section active z-10 text-center">
+    <h1 class="font-playfair text-5xl md:text-7xl mb-6 opacity-0 translate-y-4" id="welcome-title">Happy Birthday ❤️</h1>
+    <p class="text-lg md:text-xl text-gray-300 max-w-xl mx-auto mb-10 opacity-0 translate-y-4" id="welcome-sub">
+      I made a small surprise especially for you, but you'll have to unlock it first...
+    </p>
+    <button id="btn-start" class="glow-btn pulse-infinite px-8 py-3 rounded-full text-lg font-semibold tracking-wide opacity-0 text-white">
+      Start the Adventure ✨
+    </button>
+  </section>
+
+  <!-- ================= SECTION 2: Treasure Hunt Quiz ================= -->
+  <section id="sec-2" class="section z-10">
+    <div class="glass-card w-[90%] max-w-md p-8 rounded-2xl flex flex-col relative overflow-hidden">
+      <!-- Progress Bar -->
+      <div class="w-full h-1.5 bg-white/20 rounded-full mb-8 overflow-hidden">
+        <div id="quiz-progress" class="h-full bg-accent1 w-1/3 transition-all duration-500"></div>
+      </div>
+      
+      <div id="quiz-content" class="text-center min-h-[160px] flex flex-col justify-center">
+        <h2 id="question-text" class="font-playfair text-2xl mb-6">Question goes here...</h2>
+        <input type="text" id="answer-input" placeholder="Your answer..." class="w-full bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-center focus:outline-none focus:border-accent1 transition-colors text-white mb-2" autocomplete="off" />
+        <p id="hint-text" class="text-accent1 text-sm h-5 opacity-0 transition-opacity">Hint</p>
+      </div>
+      <button id="btn-submit" class="mt-4 glow-btn w-full py-3 rounded-xl font-semibold opacity-90 hover:opacity-100">
+        Unlock
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 2.5: Birthday Cake ================= -->
+  <section id="sec-cake" class="section z-10 text-center">
+    <h2 class="font-playfair text-4xl mb-2 text-white opacity-0 translate-y-4" id="cake-title">Make a Wish! 🎂</h2>
+    
+    <div id="cake-container" class="relative w-full max-w-lg h-[400px] mx-auto opacity-0 scale-75 transition-transform duration-1000">
+      <!-- 3D Canvas goes here -->
+    </div>
+
+    <div class="flex space-x-4 justify-center mt-6">
+      <button id="btn-blow-candles" class="glow-btn px-8 py-3 rounded-full text-lg font-semibold opacity-0">
+        Blow out the candles 🌬️
+      </button>
+      <p id="cake-instruction" class="font-playfair text-xl items-center hidden opacity-0 text-accent1 drop-shadow-md">
+        Move your pointer to hold the knife, then click to cut! 🔪
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 3: Gift Unlock Screen ================= -->
+  <section id="sec-3" class="section z-10 text-center">
+    <div id="gift-icon-container" class="relative mb-8 text-7xl inline-block -translate-y-4 opacity-0">
+      🎁
+      <div id="padlock" class="absolute -bottom-2 -right-2 text-3xl drop-shadow-[0_0_10px_rgba(255,26,64,0.8)]">🔓</div>
+    </div>
+    <h1 class="font-playfair text-4xl md:text-5xl mb-4 text-white opacity-0 translate-y-4" id="gift-title">Congratulations ❤️</h1>
+    <p class="text-lg text-gray-300 max-w-md mx-auto mb-10 opacity-0 translate-y-4" id="gift-sub">
+      You found all the clues. Your birthday gift is ready.
+    </p>
+    <button id="btn-open-gift" class="glow-btn pulse-infinite px-10 py-4 rounded-full text-xl font-bold opacity-0">
+      Open Gift 🎁
+    </button>
+  </section>
+
+  <!-- ================= FINAL SECTIONS (5,6,7) ================= -->
+  <div id="final-container" class="relative w-full text-center">
+    
+    <!-- SECTION 5: Birthday Message Card -->
+    <div class="min-h-screen flex items-center justify-center py-20 px-4 pt-32">
+      <div class="glass-card max-w-2xl w-full p-8 md:p-12 rounded-3xl relative overflow-hidden backdrop-blur-xl bg-white/5 border-white/20">
+        <h2 class="font-playfair text-4xl mb-10 text-accent1 drop-shadow-md">Happy Birthday ❤️</h2>
+        <div class="space-y-6 text-lg md:text-xl font-light text-gray-100 leading-relaxed max-w-xl mx-auto">
+          <p>Thank you for being part of my life.</p>
+          <p>I may not always express everything perfectly, but I truly appreciate every moment with you.</p>
+          <p>I hope this year brings you happiness, success, peace, and countless reasons to smile.</p>
+          <p>Enjoy your special day and always keep smiling.</p>
+          <p class="mt-8 text-3xl">❤️</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Memory Gallery -->
+    <div class="py-20 px-8 max-w-6xl mx-auto text-center" id="gallery">
+      <h2 class="font-playfair text-3xl mb-16">Our Memories ✨</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Card 1 -->
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/222/fff?text=First+Chat', 'First Chat ❤️')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5">
+            <img src="https://via.placeholder.com/400x500/222/fff?text=First+Chat" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+          </div>
+          <div class="p-4 bg-black/20 text-center font-medium">First Chat ❤️</div>
+        </div>
+        <!-- Card 2 -->
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/333/fff?text=Best+Memory', 'Best Memory ❤️')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5">
+            <img src="https://via.placeholder.com/400x500/333/fff?text=Best+Memory" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+          </div>
+          <div class="p-4 bg-black/20 text-center font-medium">Best Memory ❤️</div>
+        </div>
+        <!-- Card 3 -->
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/444/fff?text=Special+Moments', 'Special Moments ❤️')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5">
+            <img src="https://via.placeholder.com/400x500/444/fff?text=Special+Moments" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+          </div>
+          <div class="p-4 bg-black/20 text-center font-medium">Special Moments ❤️</div>
+        </div>
+        <!-- Card 4 -->
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/555/fff?text=Today', 'Today 🎂')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5">
+            <img src="https://via.placeholder.com/400x500/555/fff?text=Today" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+          </div>
+          <div class="p-4 bg-black/20 text-center font-medium">Today 🎂</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 7: Final Surprise Footer -->
+    <div class="py-24 px-4 pb-32">
+      <p class="font-playfair text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto mb-10 italic">
+        "No matter how many birthdays come, I will always be grateful for having you in my life. ❤️"
+      </p>
+      <button id="btn-final" class="glass-card px-8 py-3 rounded-full text-lg hover:bg-white/10 transition-colors border-accent1/50 text-accent1">
+        Send a Heart Back 💖
+      </button>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex-col items-center justify-center opacity-0 transition-opacity">
+    <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white/70 hover:text-white glass-card p-2 rounded-full z-50">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <img id="lightbox-img" src="" class="max-h-[80vh] max-w-[90vw] object-contain rounded-lg shadow-2xl" alt="Zoomed Memory" />
+    <p id="lightbox-caption" class="font-playfair text-xl md:text-2xl mt-6 text-white tracking-wide"></p>
+  </div>
+
+  <script>
+    /* ==================================
+       Background Hearts Generation
+    ================================== */
+    function createFloatingHearts() {
+      const container = document.getElementById('hearts-container');
+      const heartCount = 20;
+      for (let i = 0; i < heartCount; i++) {
+        const heart = document.createElement('div');
+        heart.innerHTML = '❤️';
+        heart.classList.add('heart-float');
+        heart.style.left = `${Math.random() * 100}%`;
+        heart.style.animationDuration = `${10 + Math.random() * 15}s`;
+        heart.style.animationDelay = `${Math.random() * 5}s`;
+        const scale = 0.5 + Math.random() * 1.5;
+        heart.style.transform = `scale(${scale})`;
+        heart.style.opacity = Math.random() * 0.5 + 0.2;
+        container.appendChild(heart);
+      }
+    }
+    createFloatingHearts();
+
+    /* ==================================
+       Music Control
+    ================================== */
+    const musicBtn = document.getElementById('music-btn');
+    const bgm = document.getElementById('bgm');
+    const musicIcon = document.getElementById('music-icon');
+    let isPlaying = false;
+    let interactionOccurred = false;
+
+    function playMusic() {
+      if(!isPlaying) {
+        bgm.play().catch(e => console.log('Audio play failed:', e));
+        isPlaying = true;
+        musicIcon.innerHTML = `
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        `;
+      }
+    }
+    function pauseMusic() {
+      if(isPlaying) {
+        bgm.pause();
+        isPlaying = false;
+        musicIcon.innerHTML = `
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        `;
+      }
+    }
+    musicBtn.addEventListener('click', () => {
+      interactionOccurred = true;
+      if(isPlaying) pauseMusic();
+      else playMusic();
+    });
+
+    document.body.addEventListener('click', () => {
+      if(!interactionOccurred) {
+        interactionOccurred = true;
+        playMusic();
+      }
+    }, { once: true });
+
+
+    /* ==================================
+       States & Flow
+    ================================== */
+    function switchSection(outId, inId, onActiveCallback) {
+      const outSec = document.getElementById(outId);
+      const inSec = document.getElementById(inId);
+      
+      gsap.to(outSec, { opacity: 0, duration: 0.6, onComplete: () => {
+        outSec.classList.remove('active');
+        inSec.classList.add('active');
+        
+        if (onActiveCallback) onActiveCallback();
+
+        if (inId === 'final-container') {
+           gsap.fromTo(inSec, {opacity: 0}, {opacity: 1, duration: 1});
+           document.body.style.overflow = 'auto'; // enable body scroll or let final-container scroll
+        } else {
+           gsap.fromTo(inSec, {opacity: 0}, {opacity: 1, duration: 0.6});
+        }
+      }});
+    }
+
+    /* SECTION 1 Animations */
+    window.onload = () => {
+      gsap.to('#welcome-title', { opacity: 1, y: 0, duration: 1, delay: 0.5, ease: "power2.out" });
+      gsap.to('#welcome-sub', { opacity: 1, y: 0, duration: 1, delay: 1, ease: "power2.out" });
+      gsap.to('#btn-start', { opacity: 1, duration: 1, delay: 1.8, ease: "power2.out" });
+    };
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      switchSection('sec-1', 'sec-2');
+      setTimeout(() => {
+        inputEl.focus();
+      }, 700);
+    });
+
+    /* SECTION 2: Quiz Logic */
+    const quizData = [
+      { q: "Where did we first meet?" },
+      { q: "What is my favorite color?" },
+      { q: "What's the nickname I call you?" }
+    ];
+    let currentQ = 0;
+
+    const questionText = document.getElementById('question-text');
+    const inputEl = document.getElementById('answer-input');
+    const hintEl = document.getElementById('hint-text');
+    const progBar = document.getElementById('quiz-progress');
+
+    function loadQuestion(index) {
+      gsap.fromTo(questionText, {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4});
+      gsap.fromTo(inputEl, {opacity: 0}, {opacity: 1, duration: 0.4});
+      questionText.textContent = quizData[index].q;
+      inputEl.value = '';
+      hintEl.style.opacity = 0;
+      inputEl.focus();
+      progBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
+    }
+    
+    // Automatically load the first question
+    loadQuestion(currentQ);
+
+    document.getElementById('btn-submit').addEventListener('click', handleAnswer);
+    inputEl.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter') handleAnswer();
+    });
+
+    async function handleAnswer() {
+      const ans = inputEl.value.trim().toLowerCase();
+      if (!ans) return;
+
+      try {
+        // SECURITY: Securely verify the answer via Python backend instead of raw JavaScript
+        const response = await fetch('/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ question_index: currentQ, answer: ans })
+        });
+        
+        const result = await response.json();
+
+        if (result.correct) {
+          // Correct Answer Animation
+          shootMiniHearts();
+          currentQ++;
+          if (currentQ < quizData.length) {
+            gsap.to([questionText, inputEl], {opacity: 0, y: -10, duration: 0.3, onComplete: () => loadQuestion(currentQ)});
+          } else {
+            // Finished Quiz - GO TO CAKE SCREEN
+            switchSection('sec-2', 'sec-cake', () => {
+              animateCake();
+            });
+          }
+        } else {
+          // Incorrect Answer Animation
+          inputEl.classList.remove('shake');
+          void inputEl.offsetWidth; // trigger reflow
+          inputEl.classList.add('shake');
+          hintEl.textContent = result.hint || "Try again!";
+          hintEl.style.opacity = 1;
+          inputEl.focus();
+        }
+      } catch (error) {
+        console.error("Verification error:", error);
+      }
+    }
+
+    function shootMiniHearts() {
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#ff4d79', '#ff1a40', '#ffffff'],
+        shapes: ['circle'],
+        scalar: 0.8
+      });
+    }
+
+    /* ==================================
+       SECTION CAKE: 3D THREE.JS LOGIC
+    ================================== */
+    let cakeScene, cakeCamera, cakeRenderer, cakeControls;
+    let cakeGroup, knifeGroup, flames3D = [];
+    let cakeAnimId;
+    let knifeMode = false;
+
+    function init3DCake() {
+      const container = document.getElementById('cake-container');
+      container.innerHTML = ''; // clear if exists
+      
+      cakeScene = new THREE.Scene();
+      cakeCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      cakeCamera.position.set(0, 30, 60);
+      cakeCamera.lookAt(0, 5, 0);
+
+      cakeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      cakeRenderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(cakeRenderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      cakeScene.add(ambientLight);
+      
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(10, 20, 20);
+      cakeScene.add(dirLight);
+
+      cakeGroup = new THREE.Group();
+
+      // Cake Base
+      const baseMat = new THREE.MeshPhongMaterial({ color: 0xff6699, shininess: 30 });
+      const baseGeo = new THREE.CylinderGeometry(14, 14, 8, 40);
+      const base = new THREE.Mesh(baseGeo, baseMat);
+      base.position.y = 4;
+      cakeGroup.add(base);
+
+      // Cake Top with "Happy Birthday Sitaa 🩷" text
+      const textCanvas = document.createElement('canvas');
+      textCanvas.width = 512;
+      textCanvas.height = 512;
+      const tCtx = textCanvas.getContext('2d');
+      tCtx.fillStyle = '#ffffff';
+      tCtx.fillRect(0, 0, 512, 512);
+
+      tCtx.translate(256, 256);
+      // Adjust text so it faces camera correctly on top of cylinder
+      tCtx.rotate(-Math.PI / 2);
+      tCtx.fillStyle = '#ff1a40';
+      tCtx.font = 'italic bold 48px "Playfair Display", serif';
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+      tCtx.fillText('Happy Birthday', 0, -30);
+      tCtx.fillText('Sitaa 🩷', 0, 40);
+      
+      // Little decorative border on top tier
+      tCtx.strokeStyle = '#ff4d79';
+      tCtx.lineWidth = 12;
+      tCtx.beginPath();
+      tCtx.arc(0, 0, 240, 0, Math.PI * 2);
+      tCtx.stroke();
+      tCtx.translate(-256, -256);
+
+      const topTexture = new THREE.CanvasTexture(textCanvas);
+      const topMatSide = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 20 });
+      const topMatTop = new THREE.MeshPhongMaterial({ map: topTexture, shininess: 20 });
+      const topMatBot = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 20 });
+      
+      const topGeo = new THREE.CylinderGeometry(10, 10, 6, 40);
+      // Render different materials for side, top, and bottom
+      const topTier = new THREE.Mesh(topGeo, [topMatSide, topMatTop, topMatBot]);
+      topTier.position.y = 10.5;
+      cakeGroup.add(topTier);
+
+      // Candles & Flames
+      const candleMat = new THREE.MeshPhongMaterial({ color: 0x00ffff });
+      const flameMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+
+      for(let i=0; i<3; i++) {
+        const candleGeo = new THREE.CylinderGeometry(0.4, 0.4, 4, 12);
+        const candle = new THREE.Mesh(candleGeo, candleMat);
+        candle.position.set((i-1)*5, 15, 0);
+        cakeGroup.add(candle);
+
+        const flameGeo = new THREE.ConeGeometry(0.6, 1.8, 12);
+        const flame = new THREE.Mesh(flameGeo, flameMat);
+        flame.position.set((i-1)*5, 17.5, 0);
+        cakeGroup.add(flame);
+        flames3D.push(flame);
+      }
+
+      cakeScene.add(cakeGroup);
+
+      // Knife (Snif)
+      knifeGroup = new THREE.Group();
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 });
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+      
+      const bladeGeo = new THREE.BoxGeometry(0.2, 4, 18);
+      const blade = new THREE.Mesh(bladeGeo, bladeMat);
+      blade.position.set(0, 0, 0);
+      
+      const handleGeo = new THREE.BoxGeometry(0.5, 3, 6);
+      const handle = new THREE.Mesh(handleGeo, handleMat);
+      handle.position.set(0, 0.5, 12);
+      
+      knifeGroup.add(blade);
+      knifeGroup.add(handle);
+      
+      // Initially hovering high above the cake
+      knifeGroup.position.set(0, 40, 5); 
+      knifeGroup.rotation.x = -Math.PI / 4; // Tilted like it's being held
+      knifeGroup.visible = false;
+      cakeScene.add(knifeGroup);
+
+      // Add Orbit Controls for User Rotation
+      cakeControls = new THREE.OrbitControls(cakeCamera, cakeRenderer.domElement);
+      cakeControls.enablePan = false;
+      cakeControls.minDistance = 30;
+      cakeControls.maxDistance = 100;
+      cakeControls.autoRotate = true; // Rotates automatically until user drags it
+      cakeControls.autoRotateSpeed = 2.0;
+
+      // Make knife follow cursor when active
+      container.addEventListener('mousemove', (e) => {
+        if (!knifeMode) return;
+        const rect = container.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        // Map cursor position to 3D space near the cake
+        const vec = new THREE.Vector3(x, y, 0.5);
+        vec.unproject(cakeCamera);
+        const dir = vec.sub(cakeCamera.position).normalize();
+        const distance = (10 - cakeCamera.position.z) / dir.z; 
+        const pos = cakeCamera.position.clone().add(dir.multiplyScalar(distance));
+        
+        gsap.to(knifeGroup.position, { x: pos.x, y: Math.max(pos.y, 10), duration: 0.2 });
+      });
+
+      // Click to slice
+      container.addEventListener('click', async () => {
+        if (!knifeMode) return;
+        knifeMode = false; // Disable further movement
+
+        try { await fetch('/cut_cake', { method: 'POST' }); } catch (e) { console.log(e); }
+
+        gsap.to('#cake-instruction', { opacity: 0, duration: 0.3 });
+
+        // Animate Slice
+        gsap.to(knifeGroup.position, { x: 0, y: -2, z: -2, duration: 1.2, ease: "power2.in" });
+        gsap.to(knifeGroup.rotation, { x: 0, Math: 0, duration: 1.2, ease: "power2.in" });
+
+        // Split the cake smoothly
+        gsap.to(cakeGroup.position, { z: 8, duration: 1.5, delay: 1.2, ease: "power2.out" });
+
+        setTimeout(() => {
+          switchSection('sec-cake', 'sec-3', () => { animateSection3(); });
+        }, 3000);
+      });
+
+      function render3D() {
+        cakeAnimId = requestAnimationFrame(render3D);
+        
+        if (cakeControls) cakeControls.update();
+
+        // Flicker flames
+        flames3D.forEach(f => {
+          if (f.visible) {
+            const scale = 1 + Math.random() * 0.2;
+            f.scale.set(scale, scale, scale);
+          }
+        });
+
+        cakeRenderer.render(cakeScene, cakeCamera);
+      }
+      render3D();
+    }
+
+    function animateCake() {
+      gsap.to('#cake-title', { opacity: 1, y: 0, duration: 1, delay: 0.5 });
+      init3DCake();
+      gsap.to('#cake-container', { opacity: 1, scale: 1, duration: 1, delay: 0.8, ease: "back.out(1.7)" });
+      gsap.to('#btn-blow-candles', { opacity: 1, duration: 1, delay: 1.5 });
+    }
+
+    document.getElementById('btn-blow-candles').addEventListener('click', async () => {
+      // 1. Python Call
+      try { await fetch('/blow_candles', { method: 'POST' }); } catch (e) { console.log(e); }
+
+      // 2. Animate 3D Flames extinguishing
+      flames3D.forEach(f => {
+        gsap.to(f.scale, { x: 0, y: 0, z: 0, duration: 0.3, onComplete: () => f.visible = false });
+      });
+
+      // 3. Switch Buttons & Activate Knife
+      gsap.to('#btn-blow-candles', { opacity: 0, duration: 0.5, onComplete: () => {
+        document.getElementById('btn-blow-candles').classList.add('hidden');
+        
+        const instruction = document.getElementById('cake-instruction');
+        instruction.classList.remove('hidden');
+        gsap.to(instruction, { opacity: 1, duration: 0.5 });
+        
+        // Stop auto rotation when they are about to cut
+        if (cakeControls) cakeControls.autoRotate = false;
+        
+        // Show knife hovering
+        knifeGroup.visible = true;
+        gsap.fromTo(knifeGroup.position, {y: 40}, {y: 20, duration: 1, ease: 'power2.out', onComplete: () => {
+          knifeMode = true; // Engage mouse tracking for knife
+        }});
+      }});
+    });
+
+    /* SECTION 3 Animations */
+    function animateSection3() {
+      gsap.fromTo('#gift-icon-container', { scale: 0.5, opacity: 0}, { scale: 1, opacity: 1, y: 0, duration: 1, delay: 0.5 });
+      gsap.to('#gift-title', { opacity: 1, y: 0, duration: 1, delay: 0.8 });
+      gsap.to('#gift-sub', { opacity: 1, y: 0, duration: 1, delay: 1.1 });
+      gsap.to('#btn-open-gift', { opacity: 1, duration: 1, delay: 1.5 });
+    }
+
+    /* SECTION 4: Grand Reveal */
+    document.getElementById('btn-open-gift').addEventListener('click', () => {
+      // Animate lid/padlock
+      gsap.to('#padlock', { y: 20, opacity: 0, duration: 0.5 });
+      gsap.to('#gift-icon-container', { scale: 1.5, opacity: 0, y: -50, duration: 0.8, delay: 0.4, ease: "power2.in" });
+      
+      setTimeout(() => {
+        // Confetti burst
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        (function frame() {
+          confetti({
+            particleCount: 15,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#ff4d79', '#ff1a40', '#8a2be2', '#fff']
+          });
+          confetti({
+            particleCount: 15,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#ff4d79', '#ff1a40', '#8a2be2', '#fff']
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        }());
+
+        // Flash overlay + transition to Section 5
+        const overlay = document.getElementById('flash-overlay');
+        gsap.to(overlay, { opacity: 1, duration: 0.8, onComplete: () => {
+          document.getElementById('sec-3').classList.remove('active');
+          document.getElementById('final-container').classList.add('active');
+          document.body.style.overflow = 'auto'; // enable scroll now
+          gsap.to(overlay, { opacity: 0, duration: 1.5 });
+        }});
+
+      }, 1000);
+    });
+
+    /* SECTION 6: Lightbox */
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+
+    function openLightbox(src, caption) {
+      lightboxImg.src = src;
+      lightboxCaption.textContent = caption;
+      lightbox.classList.remove('hidden');
+      lightbox.classList.add('flex');
+      // small delay for css transition if needed, or gsap
+      gsap.to(lightbox, {opacity: 1, duration: 0.3});
+    }
+
+    function closeLightbox() {
+      gsap.to(lightbox, {opacity: 0, duration: 0.3, onComplete: () => {
+        lightbox.classList.add('hidden');
+        lightbox.classList.remove('flex');
+        lightboxImg.src = '';
+      }});
+    }
+
+    /* SECTION 7: Final Surprise Footer */
+    document.getElementById('btn-final').addEventListener('click', (e) => {
+      // Spawn floating hearts from mouse
+      const x = e.clientX;
+      const y = e.clientY;
+      for(let i=0; i<10; i++) {
+        const h = document.createElement('div');
+        h.innerHTML = '💖';
+        h.style.position = 'fixed';
+        h.style.left = `${x}px`;
+        h.style.top = `${y}px`;
+        h.style.fontSize = `${20 + Math.random()*20}px`;
+        h.style.pointerEvents = 'none';
+        h.style.zIndex = '9999';
+        document.body.appendChild(h);
+
+        gsap.to(h, {
+          y: -window.innerHeight,
+          x: (Math.random()-0.5)*200,
+          opacity: 0,
+          rotation: Math.random()*360,
+          duration: 2 + Math.random()*2,
+          ease: "power1.out",
+          onComplete: () => h.remove()
+        });
+      }
+    });
+
+  </script>
+</body>
+</html>
