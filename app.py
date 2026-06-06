@@ -25,16 +25,16 @@ QUIZ_DATA = {
         "hint": "Hint: It's something you do to flowers, and also to my heart when you smile..."
     },
     2: {
-        "answer": "chinnu", # Set correct answer for Q3
-        "hint": "Hint: Sweet like a bee's creation..."
+        "answer": "sitaa", # Set correct answer for Q3
+        "hint": "Hint: it's a name..."
     },
     3: {
         "answer": "Husharu", # Set correct answer for Q4
         "hint": "Hint: Its something I say to you in every ending conversation..."
     },
     4: {
-        "answer": "🤍", # Set correct answer for Q5
-        "hint": "Hint: It's a symbol of pure love, just like how I feel about you every day..."
+        "answer": "kesari bath", # Set correct answer for Q5
+        "hint": "Hint: It's a delicious dish I know you love..."
     }
     
 
@@ -145,6 +145,48 @@ async def remove_today_memory():
     except Exception as e:
         print(f"Error removing memory: {e}")
         raise HTTPException(status_code=500, detail="Failed to remove memory")
+
+@app.post("/save_feedback")
+async def save_feedback(request: Request):
+    try:
+        data = await request.json()
+        feedback = data.get('feedback', '')
+        
+        if not feedback:
+            raise HTTPException(status_code=400, detail="Feedback is required")
+        
+        # Save to JSON file
+        json_path = Path("static/feedback.json")
+        with open(json_path, "w") as f:
+            json.dump({"feedback": feedback}, f)
+        
+        return {"success": True}
+    except Exception as e:
+        print(f"Error saving feedback: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save feedback")
+
+@app.get("/get_feedback")
+async def get_feedback():
+    try:
+        json_path = Path("static/feedback.json")
+        if json_path.exists():
+            with open(json_path, "r") as f:
+                data = json.load(f)
+            return data
+        return {"feedback": None}
+    except Exception as e:
+        return {"feedback": None}
+
+@app.post("/delete_feedback")
+async def delete_feedback():
+    try:
+        json_path = Path("static/feedback.json")
+        if json_path.exists():
+            json_path.unlink()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error deleting feedback: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete feedback")
 
 if __name__ == '__main__':
     # Start the secure backend server

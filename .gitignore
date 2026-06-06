@@ -1,0 +1,8 @@
+static/images/special_moments.mp4
+static/images/today_memory.jpg
+static/today_memory.json
+static/feedback.json
+__pycache__/
+*.pyc
+venv/
+.DS_Store

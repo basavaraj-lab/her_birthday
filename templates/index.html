@@ -341,17 +341,18 @@
           </div>
           <div class="p-4 bg-black/20 text-center font-medium">Best Memory ❤️</div>
         </div>
-        <!-- Card 3 -->
-        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/444/fff?text=Special+Moments', 'Special Moments ❤️')">
-          <div class="aspect-[3/4] overflow-hidden bg-white/5">
-            <img src="https://via.placeholder.com/400x500/444/fff?text=Special+Moments" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+        <!-- Card 3 - Letter -->
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('/static/images/letter.png', 'Letter 💌')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5 flex items-center justify-center">
+            <img src="/static/images/letter.png" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" alt="Letter" />
           </div>
-          <div class="p-4 bg-black/20 text-center font-medium">Special Moments ❤️</div>
+          <div class="p-4 bg-black/20 text-center font-medium">Letter 💌</div>
         </div>
         <!-- Card 4 - Interactive Today Card -->
         <div id="today-card" class="gallery-card glass-card rounded-xl overflow-hidden group">
-          <div class="aspect-[3/4] overflow-hidden bg-white/5 flex items-center justify-center relative">
-            <img id="today-image" src="https://via.placeholder.com/400x500/555/fff?text=Add+Your+Memory" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" alt="Today" />
+          <div class="aspect-[3/4] overflow-hidden bg-gradient-to-br from-pink-500/20 to-red-500/20 flex items-center justify-center relative">
+            <img id="today-image" src="" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" alt="Today" style="display:none;" />
+            <span id="today-placeholder" class="text-6xl">🎂</span>
             <div class="absolute top-2 right-2 z-10">
               <button onclick="removeTodayMemory()" id="remove-today-btn" class="bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" style="display:none;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -374,9 +375,37 @@
       <p class="font-playfair text-xl md:text-2xl text-gray-200 max-w-2xl mx-auto mb-10 italic">
         "No matter how many birthdays come, I will always be grateful for having you in my life. ❤️"
       </p>
-      <button id="btn-final" class="glass-card px-8 py-3 rounded-full text-lg hover:bg-white/10 transition-colors border-accent1/50 text-accent1">
+      <button id="btn-final" class="glass-card px-8 py-3 rounded-full text-lg hover:bg-white/10 transition-colors border-accent1/50 text-accent1 mb-16">
         Send a Heart Back 💖
       </button>
+
+      <!-- Feedback Section -->
+      <div class="max-w-2xl mx-auto mt-20">
+        <div class="glass-card p-8 rounded-2xl">
+          <h3 class="font-playfair text-2xl mb-4 text-center text-accent1">Describe me in your own words...</h3>
+          <p class="text-gray-300 text-center mb-6 text-sm">Your words mean everything to me 💭</p>
+          
+          <div id="feedback-display" class="mb-6 p-4 bg-white/5 rounded-lg relative" style="display:none;">
+            <p class="text-gray-200 italic pr-8" id="saved-feedback"></p>
+            <button onclick="deleteFeedback()" class="absolute top-2 right-2 text-red-400 hover:text-red-500 text-xs bg-black/30 px-2 py-1 rounded">✕ Delete</button>
+          </div>
+
+          <div id="feedback-form">
+            <textarea 
+              id="feedback-input" 
+              placeholder="Write your thoughts here..." 
+              class="w-full bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent1 resize-none" 
+              rows="5"
+            ></textarea>
+            <button 
+              onclick="saveFeedback()" 
+              class="glow-btn w-full mt-4 py-3 rounded-xl font-semibold"
+            >
+              Share Your Words ❤️
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -386,6 +415,9 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
     <img id="lightbox-img" src="" class="max-h-[80vh] max-w-[90vw] object-contain rounded-lg shadow-2xl" alt="Zoomed Memory" />
+    <video id="lightbox-video" class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl" controls style="display:none;">
+      <source id="lightbox-video-src" src="" type="video/mp4">
+    </video>
     <p id="lightbox-caption" class="font-playfair text-xl md:text-2xl mt-6 text-white tracking-wide"></p>
   </div>
 
@@ -523,7 +555,7 @@
       { q: "What is my favorite color?" },
       { q: "What's the nickname I call you?" },
       { q: "What is one thing I always say to you?" },
-      { q: "Bonus: What is something I love about you?" }
+      { q: "What is my favorite food?" }
     ];
     let currentQ = 0;
 
@@ -748,16 +780,146 @@
 
         gsap.to('#cake-instruction', { opacity: 0, duration: 0.3 });
 
-        // Animate Slice
-        gsap.to(knifeGroup.position, { x: 0, y: -2, z: -2, duration: 1.2, ease: "power2.in" });
-        gsap.to(knifeGroup.rotation, { x: 0, y: 0, duration: 1.2, ease: "power2.in" });
+        // Get knife position for slice location
+        const sliceX = knifeGroup.position.x;
+        
+        // Animate knife cutting down
+        gsap.to(knifeGroup.position, { y: 2, z: 0, duration: 1.2, ease: "power2.in" });
+        gsap.to(knifeGroup.rotation, { x: Math.PI / 2, duration: 1.2, ease: "power2.in" });
 
-        // Split the cake smoothly
-        gsap.to(cakeGroup.position, { z: 8, duration: 1.5, delay: 1.2, ease: "power2.out" });
-
+        // Create a cake slice piece
         setTimeout(() => {
-          switchSection('sec-cake', 'sec-3', () => { animateSection3(); });
-        }, 3000);
+          // Create slice geometry - a wedge shape
+          const sliceGroup = new THREE.Group();
+          
+          // Slice body (triangular prism)
+          const sliceShape = new THREE.Shape();
+          sliceShape.moveTo(0, 0);
+          sliceShape.lineTo(4, 0);
+          sliceShape.lineTo(2, 8);
+          sliceShape.lineTo(0, 0);
+          
+          const extrudeSettings = { depth: 6, bevelEnabled: false };
+          const sliceGeo = new THREE.ExtrudeGeometry(sliceShape, extrudeSettings);
+          const sliceMat = new THREE.MeshPhongMaterial({ color: 0xff6699 });
+          const sliceBody = new THREE.Mesh(sliceGeo, sliceMat);
+          sliceBody.rotation.y = Math.PI / 2;
+          sliceGroup.add(sliceBody);
+          
+          // Frosting on top
+          const frostingGeo = new THREE.BoxGeometry(6, 0.5, 4);
+          const frostingMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+          const frosting = new THREE.Mesh(frostingGeo, frostingMat);
+          frosting.position.set(3, 8, 2);
+          sliceGroup.add(frosting);
+          
+          // Position slice at knife location
+          sliceGroup.position.set(sliceX, 5, 0);
+          sliceGroup.rotation.y = Math.atan2(sliceX, 10);
+          cakeScene.add(sliceGroup);
+          
+          // Hide knife
+          gsap.to(knifeGroup.position, { y: -20, duration: 0.8, delay: 0.5 });
+          
+          // Show notification message first
+          setTimeout(() => {
+            const notification = document.createElement('div');
+            notification.id = 'cake-notification';
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '-400px';
+            notification.style.width = '350px';
+            notification.style.padding = '20px';
+            notification.style.background = 'linear-gradient(135deg, rgba(255, 77, 121, 0.95), rgba(255, 26, 64, 0.95))';
+            notification.style.backdropFilter = 'blur(12px)';
+            notification.style.borderRadius = '15px';
+            notification.style.boxShadow = '0 10px 40px rgba(255, 77, 121, 0.5)';
+            notification.style.zIndex = '1000';
+            notification.style.fontFamily = '"Poppins", sans-serif';
+            notification.style.color = 'white';
+            notification.innerHTML = `
+              <div style="font-size: 1.5rem; margin-bottom: 10px;">🎂</div>
+              <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 10px;">Happy Birthday Sitaa!</div>
+              <div style="font-size: 0.95rem; margin-bottom: 15px; opacity: 0.95;">This is for you, open your mouth! 😋</div>
+              <button id="thank-you-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: white;
+                color: #ff1a40;
+                border: none;
+                border-radius: 10px;
+                font-weight: 600;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.3s;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+              " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                Thank you chinnu ❤️
+              </button>
+            `;
+            document.body.appendChild(notification);
+            
+            // Slide in notification
+            gsap.to(notification, { right: '20px', duration: 0.5, ease: 'back.out(1.7)' });
+            
+            // Handle button click
+            document.getElementById('thank-you-btn').addEventListener('click', () => {
+              // Slide out notification
+              gsap.to(notification, { 
+                right: '-400px', 
+                duration: 0.5, 
+                ease: 'back.in(1.7)',
+                onComplete: () => notification.remove()
+              });
+              
+              // Now animate slice coming to screen
+              gsap.to(sliceGroup.position, { 
+                x: 0, 
+                y: 10, 
+                z: 45, 
+                duration: 2.5, 
+                delay: 0.5, 
+                ease: "power2.inOut"
+              });
+              
+              gsap.to(sliceGroup.rotation, { 
+                x: 0,
+                y: 0, 
+                z: 0,
+                duration: 2.5, 
+                delay: 0.5, 
+                ease: "power2.inOut"
+              });
+              
+              gsap.to(sliceGroup.scale, {
+                x: 2,
+                y: 2,
+                z: 2,
+                duration: 2.5,
+                delay: 0.5,
+                ease: "power2.inOut"
+              });
+              
+              // Sparkle confetti
+              setTimeout(() => {
+                confetti({
+                  particleCount: 50,
+                  spread: 70,
+                  origin: { y: 0.4 },
+                  colors: ['#ff4d79', '#ff1a40', '#ffffff']
+                });
+              }, 1500);
+              
+              // Fade out cake and transition
+              gsap.to(cakeGroup.position, { y: -20, duration: 2, delay: 3, ease: "power2.in" });
+              
+              setTimeout(() => {
+                switchSection('sec-cake', 'sec-3', () => { animateSection3(); });
+              }, 5500);
+            });
+          }, 1500);
+          
+        }, 1200);
       });
 
       function render3D() {
@@ -868,23 +1030,56 @@
     /* SECTION 6: Lightbox */
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxVideo = document.getElementById('lightbox-video');
+    const lightboxVideoSrc = document.getElementById('lightbox-video-src');
     const lightboxCaption = document.getElementById('lightbox-caption');
 
     function openLightbox(src, caption) {
       lightboxImg.src = src;
+      lightboxImg.style.display = 'block';
+      lightboxVideo.style.display = 'none';
+      lightboxVideo.pause();
       lightboxCaption.textContent = caption;
       lightbox.classList.remove('hidden');
       lightbox.classList.add('flex');
-      // small delay for css transition if needed, or gsap
       gsap.to(lightbox, {opacity: 1, duration: 0.3});
     }
 
+    function openVideoLightbox(src, caption) {
+      lightboxVideoSrc.src = src;
+      lightboxVideo.load();
+      lightboxVideo.muted = false;
+      lightboxVideo.volume = 1.0;
+      lightboxVideo.style.display = 'block';
+      lightboxImg.style.display = 'none';
+      lightboxCaption.textContent = caption;
+      lightbox.classList.remove('hidden');
+      lightbox.classList.add('flex');
+      gsap.to(lightbox, {opacity: 1, duration: 0.3, onComplete: () => {
+        lightboxVideo.play();
+      }});
+    }
+
     function closeLightbox() {
+      lightboxVideo.pause();
       gsap.to(lightbox, {opacity: 0, duration: 0.3, onComplete: () => {
         lightbox.classList.add('hidden');
         lightbox.classList.remove('flex');
         lightboxImg.src = '';
+        lightboxVideoSrc.src = '';
       }});
+    }
+
+    // Auto-play video thumbnail on hover
+    const videoThumb = document.getElementById('special-video-thumb');
+    if (videoThumb) {
+      videoThumb.parentElement.parentElement.addEventListener('mouseenter', () => {
+        videoThumb.play();
+      });
+      videoThumb.parentElement.parentElement.addEventListener('mouseleave', () => {
+        videoThumb.pause();
+        videoThumb.currentTime = 0;
+      });
     }
 
     /* SECTION 7: Final Surprise Footer */
@@ -965,6 +1160,8 @@
           // Update the card
           if (result.image_url) {
             document.getElementById('today-image').src = result.image_url;
+            document.getElementById('today-image').style.display = 'block';
+            document.getElementById('today-placeholder').style.display = 'none';
             document.getElementById('today-card').onclick = () => openLightbox(result.image_url, message || 'Today 🎂');
             document.getElementById('remove-today-btn').style.display = 'block';
           }
@@ -1002,6 +1199,8 @@
         
         if (result.image_url) {
           document.getElementById('today-image').src = result.image_url;
+          document.getElementById('today-image').style.display = 'block';
+          document.getElementById('today-placeholder').style.display = 'none';
           document.getElementById('today-card').onclick = () => openLightbox(result.image_url, result.message || 'Today 🎂');
           document.getElementById('remove-today-btn').style.display = 'block';
         }
@@ -1024,8 +1223,9 @@
         const result = await response.json();
         
         if (result.success) {
-          // Reset to default
-          document.getElementById('today-image').src = 'https://via.placeholder.com/400x500/555/fff?text=Add+Your+Memory';
+          document.getElementById('today-image').src = '';
+          document.getElementById('today-image').style.display = 'none';
+          document.getElementById('today-placeholder').style.display = 'block';
           document.getElementById('today-text').innerHTML = 'Today 🎂';
           document.getElementById('today-card').onclick = null;
           document.getElementById('remove-today-btn').style.display = 'none';
@@ -1045,14 +1245,14 @@
         const result = await response.json();
         
         if (result.success) {
-          // Reset to default
-          document.getElementById('today-image').src = 'https://via.placeholder.com/400x500/555/fff?text=Add+Your+Memory';
+          document.getElementById('today-image').src = '';
+          document.getElementById('today-image').style.display = 'none';
+          document.getElementById('today-placeholder').style.display = 'block';
           document.getElementById('today-text').innerHTML = 'Today 🎂';
           document.getElementById('today-card').onclick = null;
           document.getElementById('remove-today-btn').style.display = 'none';
           document.getElementById('clear-memory-btn').style.display = 'none';
           
-          // Clear form inputs
           document.getElementById('today-message-input').value = '';
           document.getElementById('today-image-input').value = '';
         }
@@ -1060,6 +1260,122 @@
         console.error('Error clearing memory:', error);
       }
     }
+
+    /* Feedback Section */
+    async function saveFeedback() {
+      const feedback = document.getElementById('feedback-input').value.trim();
+      
+      if (!feedback) {
+        alert('Please write something before sharing!');
+        return;
+      }
+
+      try {
+        const response = await fetch('/save_feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback: feedback })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          // Show saved feedback
+          document.getElementById('saved-feedback').textContent = `"${feedback}"`;
+          document.getElementById('feedback-form').style.display = 'none';
+          document.getElementById('feedback-display').style.display = 'block';
+          
+          // Show grateful notification
+          const notification = document.createElement('div');
+          notification.style.position = 'fixed';
+          notification.style.top = '50%';
+          notification.style.left = '50%';
+          notification.style.transform = 'translate(-50%, -50%)';
+          notification.style.padding = '30px 50px';
+          notification.style.background = 'linear-gradient(135deg, rgba(255, 77, 121, 0.98), rgba(255, 26, 64, 0.98))';
+          notification.style.backdropFilter = 'blur(20px)';
+          notification.style.borderRadius = '20px';
+          notification.style.boxShadow = '0 20px 60px rgba(255, 77, 121, 0.6)';
+          notification.style.zIndex = '10000';
+          notification.style.fontFamily = '"Playfair Display", serif';
+          notification.style.color = 'white';
+          notification.style.fontSize = '1.8rem';
+          notification.style.fontWeight = 'bold';
+          notification.style.textAlign = 'center';
+          notification.style.opacity = '0';
+          notification.innerHTML = 'I am forever grateful to you. 💖';
+          document.body.appendChild(notification);
+          
+          gsap.to(notification, { 
+            opacity: 1, 
+            duration: 1, 
+            ease: 'power2.out',
+            onComplete: () => {
+              // Confetti celebration
+              confetti({
+                particleCount: 100,
+                spread: 100,
+                origin: { y: 0.5 },
+                colors: ['#ff4d79', '#ff1a40', '#ffffff', '#8a2be2']
+              });
+              
+              setTimeout(() => {
+                gsap.to(notification, { 
+                  opacity: 0, 
+                  duration: 1, 
+                  delay: 3,
+                  onComplete: () => notification.remove() 
+                });
+              }, 2000);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error saving feedback:', error);
+        alert('Failed to save. Please try again.');
+      }
+    }
+
+    function editFeedback() {
+      document.getElementById('feedback-form').style.display = 'block';
+      document.getElementById('feedback-display').style.display = 'none';
+    }
+
+    async function deleteFeedback() {
+      if (!confirm('Are you sure you want to delete your feedback?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/delete_feedback', { method: 'POST' });
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('feedback-input').value = '';
+          document.getElementById('feedback-form').style.display = 'block';
+          document.getElementById('feedback-display').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error deleting feedback:', error);
+      }
+    }
+
+    // Load saved feedback on page load
+    async function loadFeedback() {
+      try {
+        const response = await fetch('/get_feedback');
+        const result = await response.json();
+        
+        if (result.feedback) {
+          document.getElementById('saved-feedback').textContent = `"${result.feedback}"`;
+          document.getElementById('feedback-input').value = result.feedback;
+          document.getElementById('feedback-form').style.display = 'none';
+          document.getElementById('feedback-display').style.display = 'block';
+        }
+      } catch (error) {
+        console.log('No saved feedback yet');
+      }
+    }
+    loadFeedback();
 
     /* Scratch Card Logic */
     let scratchCanvas, scratchCtx;
