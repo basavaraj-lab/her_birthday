@@ -182,6 +182,34 @@
       animation: none;
       display: none;
     }
+    /* Scratch Card Styles */
+    .scratch-card {
+    position: relative;
+    width: 300px;
+    height: 150px;
+    margin: auto;
+}
+
+.reward {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: pink;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    border-radius: 10px;
+}
+
+#scratchCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 10px;
+}
+
+
   </style>
 </head>
 <body class="font-poppins h-screen w-screen text-white antialiased">
@@ -216,7 +244,7 @@
 
   <!-- ================= SECTION 2: Treasure Hunt Quiz ================= -->
   <section id="sec-2" class="section z-10">
-    <div class="glass-card w-[90%] max-w-md p-8 rounded-2xl flex flex-col relative overflow-hidden">
+    <div id="quiz-card" class="glass-card w-[90%] max-w-md p-8 rounded-2xl flex flex-col relative overflow-hidden">
       <!-- Progress Bar -->
       <div class="w-full h-1.5 bg-white/20 rounded-full mb-8 overflow-hidden">
         <div id="quiz-progress" class="h-full bg-accent1 w-1/3 transition-all duration-500"></div>
@@ -230,6 +258,18 @@
       <button id="btn-submit" class="mt-4 glow-btn w-full py-3 rounded-xl font-semibold opacity-90 hover:opacity-100">
         Unlock
       </button>
+    </div>
+
+    <!-- Reward Scratch Card -->
+    <div id="reward-container" class="glass-card w-[90%] max-w-md p-8 rounded-2xl flex-col items-center justify-center" style="display:none;">
+      <h2 class="font-playfair text-3xl mb-6 text-center">🎁 Scratch Your Reward</h2>
+      <div class="scratch-card mx-auto">
+        <div id="rewardText" class="reward text-center font-bold">
+          🎁 Reward Loading...
+        </div>
+        <canvas id="scratchCanvas"></canvas>
+      </div>
+      <p class="text-center text-gray-300 mt-4 text-sm">Scratch to reveal your reward!</p>
     </div>
   </section>
 
@@ -288,16 +328,16 @@
       <h2 class="font-playfair text-3xl mb-16">Our Memories ✨</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Card 1 -->
-        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/222/fff?text=First+Chat', 'First Chat ❤️')">
-          <div class="aspect-[3/4] overflow-hidden bg-white/5">
-            <img src="https://via.placeholder.com/400x500/222/fff?text=First+Chat" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('/static/images/first_chat.jpg', 'First Chat ❤️')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5 flex items-center justify-center">
+            <img src="/static/images/first_chat.jpg" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" alt="First Chat" />
           </div>
           <div class="p-4 bg-black/20 text-center font-medium">First Chat ❤️</div>
         </div>
         <!-- Card 2 -->
-        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/333/fff?text=Best+Memory', 'Best Memory ❤️')">
-          <div class="aspect-[3/4] overflow-hidden bg-white/5">
-            <img src="https://via.placeholder.com/400x500/333/fff?text=Best+Memory" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('/static/images/best_memory.jpeg', 'Best Memory ❤️')">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5 flex items-center justify-center">
+            <img src="/static/images/best_memory.jpeg" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" alt="Best Memory" />
           </div>
           <div class="p-4 bg-black/20 text-center font-medium">Best Memory ❤️</div>
         </div>
@@ -308,12 +348,23 @@
           </div>
           <div class="p-4 bg-black/20 text-center font-medium">Special Moments ❤️</div>
         </div>
-        <!-- Card 4 -->
-        <div class="gallery-card glass-card rounded-xl overflow-hidden group" onclick="openLightbox('https://via.placeholder.com/600x800/555/fff?text=Today', 'Today 🎂')">
-          <div class="aspect-[3/4] overflow-hidden bg-white/5">
-            <img src="https://via.placeholder.com/400x500/555/fff?text=Today" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Memory" />
+        <!-- Card 4 - Interactive Today Card -->
+        <div id="today-card" class="gallery-card glass-card rounded-xl overflow-hidden group">
+          <div class="aspect-[3/4] overflow-hidden bg-white/5 flex items-center justify-center relative">
+            <img id="today-image" src="https://via.placeholder.com/400x500/555/fff?text=Add+Your+Memory" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" alt="Today" />
+            <div class="absolute top-2 right-2 z-10">
+              <button onclick="removeTodayMemory()" id="remove-today-btn" class="bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" style="display:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+            <button onclick="openTodayUpload()" class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+              <span class="text-4xl mb-2">📸</span>
+              <span class="text-white font-semibold">Add Your Memory</span>
+            </button>
           </div>
-          <div class="p-4 bg-black/20 text-center font-medium">Today 🎂</div>
+          <div class="p-4 bg-black/20 text-center">
+            <p id="today-text" class="font-medium">Today 🎂</p>
+          </div>
         </div>
       </div>
     </div>
@@ -338,6 +389,33 @@
     <p id="lightbox-caption" class="font-playfair text-xl md:text-2xl mt-6 text-white tracking-wide"></p>
   </div>
 
+  <!-- Today Upload Modal -->
+  <div id="today-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex-col items-center justify-center opacity-0 transition-opacity">
+    <div class="glass-card max-w-md w-full p-8 rounded-2xl mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-playfair text-2xl text-accent1">Add Your Memory 💖</h3>
+        <button id="clear-memory-btn" onclick="clearCurrentMemory()" class="text-red-400 hover:text-red-500 text-sm" style="display:none;">
+          Clear Current
+        </button>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm mb-2 text-gray-300">Your Message:</label>
+        <input type="text" id="today-message-input" placeholder="Write something special..." class="w-full bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent1" />
+      </div>
+      
+      <div class="mb-6">
+        <label class="block text-sm mb-2 text-gray-300">Upload Image:</label>
+        <input type="file" id="today-image-input" accept="image/*" class="w-full bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-accent1 file:text-white file:cursor-pointer" />
+      </div>
+      
+      <div class="flex gap-4">
+        <button onclick="closeTodayUpload()" class="flex-1 glass-card px-6 py-3 rounded-xl hover:bg-white/10 transition-colors">Cancel</button>
+        <button onclick="saveTodayMemory()" class="flex-1 glow-btn px-6 py-3 rounded-xl font-semibold">Save ❤️</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /* ==================================
        Background Hearts Generation
@@ -347,7 +425,8 @@
       const heartCount = 20;
       for (let i = 0; i < heartCount; i++) {
         const heart = document.createElement('div');
-        heart.innerHTML = '❤️';
+        const emojis = ['❤️','🤍','🪽','🎂'];
+        heart.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
         heart.classList.add('heart-float');
         heart.style.left = `${Math.random() * 100}%`;
         heart.style.animationDuration = `${10 + Math.random() * 15}s`;
@@ -442,7 +521,9 @@
     const quizData = [
       { q: "Where did we first meet?" },
       { q: "What is my favorite color?" },
-      { q: "What's the nickname I call you?" }
+      { q: "What's the nickname I call you?" },
+      { q: "What is one thing I always say to you?" },
+      { q: "Bonus: What is something I love about you?" }
     ];
     let currentQ = 0;
 
@@ -474,33 +555,27 @@
       if (!ans) return;
 
       try {
-        // SECURITY: Securely verify the answer via Python backend instead of raw JavaScript
         const response = await fetch('/verify', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question_index: currentQ, answer: ans })
         });
-        
         const result = await response.json();
 
         if (result.correct) {
-          // Correct Answer Animation
           shootMiniHearts();
-          currentQ++;
-          if (currentQ < quizData.length) {
-            gsap.to([questionText, inputEl], {opacity: 0, y: -10, duration: 0.3, onComplete: () => loadQuestion(currentQ)});
-          } else {
-            // Finished Quiz - GO TO CAKE SCREEN
-            switchSection('sec-2', 'sec-cake', () => {
-              animateCake();
-            });
-          }
+          
+          // Hide quiz card and show reward scratch card
+          gsap.to('#quiz-card', {opacity: 0, scale: 0.9, duration: 0.5, onComplete: () => {
+            document.getElementById('quiz-card').style.display = 'none';
+            document.getElementById('rewardText').innerHTML = result.reward;
+            document.getElementById('reward-container').style.display = 'flex';
+            initScratchCard(); // Initialize new scratch card
+            gsap.fromTo('#reward-container', {opacity: 0, scale: 0.9}, {opacity: 1, scale: 1, duration: 0.5});
+          }});
         } else {
-          // Incorrect Answer Animation
           inputEl.classList.remove('shake');
-          void inputEl.offsetWidth; // trigger reflow
+          void inputEl.offsetWidth;
           inputEl.classList.add('shake');
           hintEl.textContent = result.hint || "Try again!";
           hintEl.style.opacity = 1;
@@ -510,6 +585,8 @@
         console.error("Verification error:", error);
       }
     }
+    
+  
 
     function shootMiniHearts() {
       confetti({
@@ -673,7 +750,7 @@
 
         // Animate Slice
         gsap.to(knifeGroup.position, { x: 0, y: -2, z: -2, duration: 1.2, ease: "power2.in" });
-        gsap.to(knifeGroup.rotation, { x: 0, Math: 0, duration: 1.2, ease: "power2.in" });
+        gsap.to(knifeGroup.rotation, { x: 0, y: 0, duration: 1.2, ease: "power2.in" });
 
         // Split the cake smoothly
         gsap.to(cakeGroup.position, { z: 8, duration: 1.5, delay: 1.2, ease: "power2.out" });
@@ -838,6 +915,256 @@
       }
     });
 
+    /* Today Memory Upload */
+    function openTodayUpload() {
+      const modal = document.getElementById('today-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      gsap.to(modal, {opacity: 1, duration: 0.3});
+      
+      // Show clear button if memory exists
+      fetch('/get_today_memory')
+        .then(res => res.json())
+        .then(data => {
+          if (data.image_url || data.message) {
+            document.getElementById('clear-memory-btn').style.display = 'block';
+          }
+        });
+    }
+
+    function closeTodayUpload() {
+      const modal = document.getElementById('today-modal');
+      gsap.to(modal, {opacity: 0, duration: 0.3, onComplete: () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }});
+    }
+
+    async function saveTodayMemory() {
+      const message = document.getElementById('today-message-input').value.trim();
+      const fileInput = document.getElementById('today-image-input');
+      const file = fileInput.files[0];
+
+      if (!message && !file) {
+        alert('Please add a message or upload an image!');
+        return;
+      }
+
+      const formData = new FormData();
+      if (message) formData.append('message', message);
+      if (file) formData.append('image', file);
+
+      try {
+        const response = await fetch('/save_today_memory', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          // Update the card
+          if (result.image_url) {
+            document.getElementById('today-image').src = result.image_url;
+            document.getElementById('today-card').onclick = () => openLightbox(result.image_url, message || 'Today 🎂');
+            document.getElementById('remove-today-btn').style.display = 'block';
+          }
+          if (message) {
+            document.getElementById('today-text').innerHTML = message + ' 🎂';
+          }
+
+          // Clear inputs
+          document.getElementById('today-message-input').value = '';
+          document.getElementById('today-image-input').value = '';
+
+          closeTodayUpload();
+          
+          // Show success animation
+          confetti({
+            particleCount: 50,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ff4d79', '#ff1a40', '#ffffff']
+          });
+        } else {
+          alert('Failed to save memory. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error saving memory:', error);
+        alert('Error saving memory. Please try again.');
+      }
+    }
+
+    // Load saved today memory on page load
+    async function loadTodayMemory() {
+      try {
+        const response = await fetch('/get_today_memory');
+        const result = await response.json();
+        
+        if (result.image_url) {
+          document.getElementById('today-image').src = result.image_url;
+          document.getElementById('today-card').onclick = () => openLightbox(result.image_url, result.message || 'Today 🎂');
+          document.getElementById('remove-today-btn').style.display = 'block';
+        }
+        if (result.message) {
+          document.getElementById('today-text').innerHTML = result.message + ' 🎂';
+        }
+      } catch (error) {
+        console.log('No saved memory yet');
+      }
+    }
+    loadTodayMemory();
+
+    async function removeTodayMemory() {
+      if (!confirm('Are you sure you want to remove this memory?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/remove_today_memory', { method: 'POST' });
+        const result = await response.json();
+        
+        if (result.success) {
+          // Reset to default
+          document.getElementById('today-image').src = 'https://via.placeholder.com/400x500/555/fff?text=Add+Your+Memory';
+          document.getElementById('today-text').innerHTML = 'Today 🎂';
+          document.getElementById('today-card').onclick = null;
+          document.getElementById('remove-today-btn').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error removing memory:', error);
+      }
+    }
+
+    async function clearCurrentMemory() {
+      if (!confirm('This will remove the current memory. Continue?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/remove_today_memory', { method: 'POST' });
+        const result = await response.json();
+        
+        if (result.success) {
+          // Reset to default
+          document.getElementById('today-image').src = 'https://via.placeholder.com/400x500/555/fff?text=Add+Your+Memory';
+          document.getElementById('today-text').innerHTML = 'Today 🎂';
+          document.getElementById('today-card').onclick = null;
+          document.getElementById('remove-today-btn').style.display = 'none';
+          document.getElementById('clear-memory-btn').style.display = 'none';
+          
+          // Clear form inputs
+          document.getElementById('today-message-input').value = '';
+          document.getElementById('today-image-input').value = '';
+        }
+      } catch (error) {
+        console.error('Error clearing memory:', error);
+      }
+    }
+
+    /* Scratch Card Logic */
+    let scratchCanvas, scratchCtx;
+    let isDrawing = false;
+    let scratchPercentage = 0;
+
+    function initScratchCard() {
+      scratchCanvas = document.getElementById("scratchCanvas");
+      scratchCtx = scratchCanvas.getContext("2d");
+      scratchCanvas.width = 300;
+      scratchCanvas.height = 150;
+      
+      // Draw scratch layer
+      scratchCtx.fillStyle = "silver";
+      scratchCtx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+      scratchCtx.fillStyle = "black";
+      scratchCtx.font = "20px Arial";
+      scratchCtx.fillText("Scratch Here 🎁", 70, 80);
+      
+      scratchPercentage = 0;
+      
+      // Remove old listeners
+      const newCanvas = scratchCanvas.cloneNode(true);
+      scratchCanvas.parentNode.replaceChild(newCanvas, scratchCanvas);
+      scratchCanvas = newCanvas;
+      scratchCtx = scratchCanvas.getContext("2d");
+      
+      // Redraw after cloning
+      scratchCtx.fillStyle = "silver";
+      scratchCtx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+      scratchCtx.fillStyle = "black";
+      scratchCtx.font = "20px Arial";
+      scratchCtx.fillText("Scratch Here 🎁", 70, 80);
+      
+      // Add event listeners
+      scratchCanvas.addEventListener("mousedown", () => { isDrawing = true; });
+      scratchCanvas.addEventListener("mouseup", () => { isDrawing = false; });
+      scratchCanvas.addEventListener("mousemove", scratch);
+      scratchCanvas.addEventListener("touchstart", (e) => { e.preventDefault(); isDrawing = true; });
+      scratchCanvas.addEventListener("touchend", () => { isDrawing = false; });
+      scratchCanvas.addEventListener("touchmove", scratchTouch);
+    }
+
+    function scratch(e) {
+      if (!isDrawing) return;
+      const rect = scratchCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      scratchCtx.globalCompositeOperation = "destination-out";
+      scratchCtx.beginPath();
+      scratchCtx.arc(x, y, 20, 0, Math.PI * 2);
+      scratchCtx.fill();
+      checkScratchCompletion();
+    }
+
+    function scratchTouch(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const rect = scratchCanvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      scratchCtx.globalCompositeOperation = "destination-out";
+      scratchCtx.beginPath();
+      scratchCtx.arc(x, y, 20, 0, Math.PI * 2);
+      scratchCtx.fill();
+      checkScratchCompletion();
+    }
+
+    function checkScratchCompletion() {
+      const imageData = scratchCtx.getImageData(0, 0, scratchCanvas.width, scratchCanvas.height);
+      let transparent = 0;
+      for (let i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] === 0) transparent++;
+      }
+      scratchPercentage = (transparent / (scratchCanvas.width * scratchCanvas.height)) * 100;
+      
+      if (scratchPercentage > 60) {
+        // Clear the canvas completely
+        scratchCtx.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+        isDrawing = false;
+        
+        // Move to next question after a delay
+        setTimeout(() => {
+          currentQ++;
+          if (currentQ < quizData.length) {
+            // Hide reward, show quiz card with next question
+            gsap.to('#reward-container', {opacity: 0, scale: 0.9, duration: 0.5, onComplete: () => {
+              document.getElementById('reward-container').style.display = 'none';
+              document.getElementById('quiz-card').style.display = 'flex';
+              gsap.fromTo('#quiz-card', {opacity: 0, scale: 0.9}, {opacity: 1, scale: 1, duration: 0.5, onComplete: () => {
+                loadQuestion(currentQ);
+              }});
+            }});
+          } else {
+            // All questions done - go to cake
+            switchSection('sec-2', 'sec-cake', () => { animateCake(); });
+          }
+        }, 1500);
+      }
+    }
+
+
+
   </script>
+
 </body>
 </html>
